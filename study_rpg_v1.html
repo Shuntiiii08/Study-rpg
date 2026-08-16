@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study RPG</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0d1117;
+    color: #f0f6fc;
+  }
+  .app {
+    max-width: 760px;
+    margin: auto;
+    padding: 20px 16px 40px;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  h1 { margin: 0; font-size: 1.7rem; }
+  .subtitle { color: #8b949e; font-size: .9rem; margin-top: 3px; }
+  button {
+    border: 0;
+    border-radius: 10px;
+    padding: 11px 15px;
+    background: #238636;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  button:active { transform: scale(.98); }
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .hero {
+    background: linear-gradient(145deg, #161b22, #1d2633);
+  }
+  .player-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .level {
+    font-size: 2.3rem;
+    font-weight: 800;
+  }
+  .xp-text { color: #8b949e; font-size: .9rem; }
+  .bar {
+    height: 12px;
+    background: #30363d;
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 14px;
+  }
+  .bar-fill {
+    height: 100%;
+    width: 0%;
+    background: #58a6ff;
+    transition: width .35s ease;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .stat {
+    background: #0d1117;
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .stat-label { color: #8b949e; font-size: .8rem; }
+  .stat-value { font-size: 1.35rem; font-weight: 750; margin-top: 4px; }
+  h2 { font-size: 1.05rem; margin: 0 0 14px; }
+  .quest {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 13px 0;
+    border-bottom: 1px solid #21262d;
+  }
+  .quest:last-child { border-bottom: 0; }
+  .quest-name { font-weight: 650; }
+  .quest-meta { color: #8b949e; font-size: .8rem; margin-top: 3px; }
+  .done {
+    color: #3fb950;
+    font-weight: 700;
+  }
+  input {
+    width: 100%;
+    background: #0d1117;
+    color: white;
+    border: 1px solid #30363d;
+    border-radius: 9px;
+    padding: 10px;
+    margin: 7px 0 10px;
+    font-size: 1rem;
+  }
+  .actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .secondary { background: #30363d; }
+  .danger { background: #da3633; }
+  .notice {
+    color: #8b949e;
+    font-size: .8rem;
+    line-height: 1.5;
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%) translateY(100px);
+    background: #238636;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-weight: 700;
+    transition: .3s;
+    z-index: 10;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 520px) {
+    .player-row { align-items: flex-start; }
+    .actions { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>⚔️ Study RPG</h1>
+      <div class="subtitle">Do the work. Gain XP. Level up.</div>
+    </div>
+    <button class="secondary" onclick="changeName()">Profile</button>
+  </header>
+
+  <section class="card hero">
+    <div class="player-row">
+      <div>
+        <div id="name" style="font-size:1.2rem;font-weight:800;">Player</div>
+        <div id="rank" class="subtitle">Novice</div>
+      </div>
+      <div style="text-align:right">
+        <div class="level">LV <span id="level">1</span></div>
+        <div class="xp-text"><span id="xp">0</span> XP</div>
+      </div>
+    </div>
+    <div class="bar"><div id="xpBar" class="bar-fill"></div></div>
+    <div id="xpNext" class="xp-text" style="margin-top:7px;"></div>
+  </section>
+
+  <section class="grid">
+    <div class="stat">
+      <div class="stat-label">🔥 STREAK</div>
+      <div class="stat-value"><span id="streak">0</span> days</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">📚 QUESTIONS TODAY</div>
+      <div class="stat-value"><span id="questions">0</span></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">⏱️ STUDY TODAY</div>
+      <div class="stat-value"><span id="study">0</span> min</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">🏆 TOTAL XP</div>
+      <div class="stat-value"><span id="totalXp">0</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>⚔️ Today's Quests</h2>
+
+    <div class="quest">
+      <div>
+        <div class="quest-name">Solve 25 questions</div>
+        <div class="quest-meta">Reward: +40 XP</div>
+      </div>
+      <div id="qQuest"></div>
+    </div>
+
+    <div class="quest">
+      <div>
+        <div class="quest-name">Study for 120 minutes</div>
+        <div class="quest-meta">Reward: +60 XP</div>
+      </div>
+      <div id="sQuest"></div>
+    </div>
+
+    <div class="quest">
+      <div>
+        <div class="quest-name">Complete revision</div>
+        <div class="quest-meta">Reward: +30 XP</div>
+      </div>
+      <div id="rQuest"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>➕ Log Progress</h2>
+
+    <label>Questions solved</label>
+    <input id="questionInput" type="number" min="0" placeholder="e.g. 30">
+    <button onclick="addQuestions()">Add questions</button>
+
+    <label style="display:block;margin-top:12px;">Study minutes</label>
+    <input id="studyInput" type="number" min="0" placeholder="e.g. 90">
+    <button onclick="addStudy()">Add study time</button>
+
+    <div class="actions">
+      <button onclick="completeRevision()">✓ Complete revision</button>
+      <button class="secondary" onclick="newDay()">Start new day</button>
+      <button class="danger" onclick="resetData()">Reset all data</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>💡 How XP works</h2>
+    <div class="notice">
+      Questions: 1 XP each · Study: 1 XP per 2 minutes ·
+      Daily quest bonuses are awarded once when completed.
+      <br><br>
+      This version stores data only on this device. Multiplayer + Firebase comes in V2.
+    </div>
+  </section>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const KEY = "studyRPG_v1";
+
+let data = JSON.parse(localStorage.getItem(KEY)) || {
+  name: "Player",
+  xp: 0,
+  streak: 0,
+  questions: 0,
+  study: 0,
+  revision: false,
+  qReward: false,
+  sReward: false,
+  rReward: false,
+  lastDate: new Date().toDateString()
+};
+
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(data));
+  render();
+}
+
+function levelInfo(xp) {
+  let level = 1;
+  let needed = 100;
+  let remaining = xp;
+
+  while (remaining >= needed) {
+    remaining -= needed;
+    level++;
+    needed = Math.floor(100 * Math.pow(1.18, level - 1));
+  }
+  return { level, remaining, needed };
+}
+
+function rankFor(level) {
+  if (level >= 30) return "Legend";
+  if (level >= 20) return "Elite";
+  if (level >= 10) return "Hunter";
+  if (level >= 5) return "Warrior";
+  return "Novice";
+}
+
+function addXP(amount, reason) {
+  data.xp += amount;
+  showToast("+" + amount + " XP • " + reason);
+  save();
+}
+
+function addQuestions() {
+  const n = Number(document.getElementById("questionInput").value);
+  if (!n || n < 1) return;
+  data.questions += n;
+  data.xp += n;
+  document.getElementById("questionInput").value = "";
+
+  if (data.questions >= 25 && !data.qReward) {
+    data.qReward = true;
+    data.xp += 40;
+    showToast("+"+(n+40)+" XP • Quest complete!");
+  } else {
+    showToast("+" + n + " XP");
+  }
+  save();
+}
+
+function addStudy() {
+  const n = Number(document.getElementById("studyInput").value);
+  if (!n || n < 1) return;
+  data.study += n;
+  const earned = Math.floor(n / 2);
+  data.xp += earned;
+  document.getElementById("studyInput").value = "";
+
+  if (data.study >= 120 && !data.sReward) {
+    data.sReward = true;
+    data.xp += 60;
+    showToast("+"+(earned+60)+" XP • Quest complete!");
+  } else {
+    showToast("+" + earned + " XP");
+  }
+  save();
+}
+
+function completeRevision() {
+  if (data.revision) {
+    showToast("Revision already completed today.");
+    return;
+  }
+  data.revision = true;
+  data.xp += 30;
+  data.rReward = true;
+  showToast("+30 XP • Revision complete!");
+  save();
+}
+
+function newDay() {
+  const today = new Date().toDateString();
+  if (data.lastDate === today) {
+    showToast("You're already on today's data.");
+    return;
+  }
+
+  data.streak++;
+  data.questions = 0;
+  data.study = 0;
+  data.revision = false;
+  data.qReward = false;
+  data.sReward = false;
+  data.rReward = false;
+  data.lastDate = today;
+
+  save();
+  showToast("New day • Streak: " + data.streak);
+}
+
+function changeName() {
+  const name = prompt("Enter your player name:", data.name);
+  if (name && name.trim()) {
+    data.name = name.trim().slice(0, 20);
+    save();
+  }
+}
+
+function resetData() {
+  if (!confirm("Reset ALL progress?")) return;
+  localStorage.removeItem(KEY);
+  location.reload();
+}
+
+function showToast(text) {
+  const t = document.getElementById("toast");
+  t.textContent = text;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+function render() {
+  const info = levelInfo(data.xp);
+
+  document.getElementById("name").textContent = data.name;
+  document.getElementById("level").textContent = info.level;
+  document.getElementById("rank").textContent = rankFor(info.level);
+  document.getElementById("xp").textContent = data.xp;
+  document.getElementById("totalXp").textContent = data.xp;
+  document.getElementById("streak").textContent = data.streak;
+  document.getElementById("questions").textContent = data.questions;
+  document.getElementById("study").textContent = data.study;
+
+  const percent = Math.min(100, (info.remaining / info.needed) * 100);
+  document.getElementById("xpBar").style.width = percent + "%";
+  document.getElementById("xpNext").textContent =
+    info.needed - info.remaining + " XP needed for next level";
+
+  document.getElementById("qQuest").innerHTML =
+    data.qReward ? '<span class="done">✓</span>' : data.questions + "/25";
+  document.getElementById("sQuest").innerHTML =
+    data.sReward ? '<span class="done">✓</span>' : data.study + "/120m";
+  document.getElementById("rQuest").innerHTML =
+    data.rReward ? '<span class="done">✓</span>' : "0/1";
+}
+
+render();
+</script>
+</body>
+</html>
